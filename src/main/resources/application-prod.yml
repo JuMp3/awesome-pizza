@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:proddb
+    #url: jdbc:mysql://prod-db-server:3306/proddb
+    driverClassName: org.h2.Driver
+    #driverClassName: com.mysql.cj.jdbc.Driver
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    #database-platform: org.hibernate.dialect.MySQL5Dialect
+  h2:
+    console:
+      enabled: false
