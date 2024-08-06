@@ -3,8 +3,14 @@ package com.example.awesome_pizza.entity;
 import com.example.awesome_pizza.enumz.OrderStatus;
 import com.example.awesome_pizza.enumz.PizzaType;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Data
 @Entity
 @Table(name = "PIZZA_ORDER")

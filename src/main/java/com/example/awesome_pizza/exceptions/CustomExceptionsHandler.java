@@ -1,6 +1,7 @@
 package com.example.awesome_pizza.exceptions;
 
 import com.example.awesome_pizza.util.JsonUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.log4j.Log4j2;
@@ -81,7 +82,16 @@ public class CustomExceptionsHandler extends ResponseEntityExceptionHandler impl
                         .filter(fieldError -> !StringUtils.isEmpty(fieldError.getDefaultMessage()))
                         .distinct()
                         .map(fieldError -> {
+
                             StringBuilder message = new StringBuilder();
+
+                            String msg = "";
+                            try {
+                                msg = JsonUtils.stringify(fieldError.getRejectedValue());
+                            } catch (JsonProcessingException ignored) {
+
+                            }
+
                             log.warn(
                                     message
                                             .append("Error '")
@@ -89,7 +99,7 @@ public class CustomExceptionsHandler extends ResponseEntityExceptionHandler impl
                                             .append("' on field ")
                                             .append(fieldError.getField())
                                             .append(" -> rejected value is '")
-                                            .append(JsonUtils.stringify(fieldError.getRejectedValue()))
+                                            .append(msg)
                                             .append("'")
                                             .toString());
 
@@ -180,14 +190,24 @@ public class CustomExceptionsHandler extends ResponseEntityExceptionHandler impl
                         .filter(constraintViolation -> !StringUtils.isEmpty(constraintViolation.getMessage()))
                         .distinct()
                         .map(constraintViolation -> {
+
                             StringBuilder message = new StringBuilder();
+
+                            String msg = "";
+                            try {
+                                msg = JsonUtils.stringify(constraintViolation.getInvalidValue());
+                            } catch (JsonProcessingException ignored) {
+
+                            }
+
                             log.warn(message
                                     .append("Error '")
                                     .append(constraintViolation.getMessage())
                                     .append(" -> rejected value is '")
-                                    .append(JsonUtils.stringify(constraintViolation.getInvalidValue()))
+                                    .append(msg)
                                     .append("'")
                                     .toString());
+
                             return ICustomExceptionsHandler.buildErrorResponse(
                                     this.profile,
                                     ((ServletWebRequest) request).getRequest(),

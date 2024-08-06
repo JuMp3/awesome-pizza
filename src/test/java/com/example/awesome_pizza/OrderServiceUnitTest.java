@@ -62,6 +62,27 @@ class OrderServiceUnitTest {
     }
 
     @Test
+    void getOrderByOrderCodeOk() {
+
+        PizzaOrder order = new PizzaOrder();
+        order.setId(1L);
+        order.setStatus(OrderStatus.IN_PROGRESS);
+        order.setOrderCode("1234");
+
+        when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.of(order));
+
+        OrderDto orderDto = orderService.getOrderByOrderCode("1234");
+        assertNotNull(orderDto);
+        assertEquals(OrderStatus.IN_PROGRESS, orderDto.getStatus());
+    }
+
+    @Test
+    void getOrderByOrderCodeKo() {
+        when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.empty());
+        assertThrows(GenericNotFoundException.class, () -> orderService.getOrderByOrderCode("12345"));
+    }
+
+    @Test
     void testUpdateOrderStatus() {
 
         PizzaOrder order = new PizzaOrder();
@@ -79,13 +100,20 @@ class OrderServiceUnitTest {
     }
 
     @Test
-    void testNotFoundOrder() {
+    void testUpdateOrderNotFound() {
+        when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.empty());
+        assertThrows(GenericNotFoundException.class, () -> orderService.updateOrderStatus("12345",
+                OrderStatus.DELIVERED));
+    }
+
+    @Test
+    void testTakeOrderNotFound() {
         when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.empty());
         assertThrows(GenericNotFoundException.class, () -> orderService.takeOrder("12345"));
     }
 
     @Test
-    void testConflictOrder() {
+    void testTakeOrderConflict() {
 
         PizzaOrder order = new PizzaOrder();
         order.setId(1L);
@@ -131,6 +159,24 @@ class OrderServiceUnitTest {
     }
 
     @Test
+    void completeOrderNotFound() {
+        when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.empty());
+        assertThrows(GenericNotFoundException.class, () -> orderService.completeOrder("12345"));
+    }
+
+    @Test
+    void completeOrderConflict() {
+
+        PizzaOrder order = new PizzaOrder();
+        order.setId(1L);
+        order.setStatus(OrderStatus.NEW);
+        order.setOrderCode("1234578");
+        when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.of(order));
+
+        assertThrows(GenericConflictException.class, () -> orderService.completeOrder("1234578"));
+    }
+
+    @Test
     void testCancelOrder() {
 
         PizzaOrder order = new PizzaOrder();
@@ -145,5 +191,23 @@ class OrderServiceUnitTest {
 
         assertNotNull(completedOrder);
         assertEquals(OrderStatus.CANCELLED, completedOrder.getStatus());
+    }
+
+    @Test
+    void cancelOrderNotFound() {
+        when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.empty());
+        assertThrows(GenericNotFoundException.class, () -> orderService.cancelOrder("12345"));
+    }
+
+    @Test
+    void cancelOrderConflict() {
+
+        PizzaOrder order = new PizzaOrder();
+        order.setId(1L);
+        order.setStatus(OrderStatus.NEW);
+        order.setOrderCode("1234578");
+        when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.of(order));
+
+        assertThrows(GenericConflictException.class, () -> orderService.cancelOrder("1234578"));
     }
 }
