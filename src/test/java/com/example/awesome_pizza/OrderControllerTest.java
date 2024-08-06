@@ -2,6 +2,7 @@ package com.example.awesome_pizza;
 
 import com.example.awesome_pizza.data.OrderDto;
 import com.example.awesome_pizza.enumz.PizzaType;
+import com.example.awesome_pizza.service.OrderService;
 import com.example.awesome_pizza.util.JsonUtils;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +24,15 @@ class OrderControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private String orderCode;
+    @Autowired
+    private OrderService orderService;
 
-    @BeforeEach
-    public void init() throws Exception {
+    @AfterEach
+    public void cleanUp() {
+        orderService.deleteAllOrders();
+    }
+
+    private String createNewOrder() throws Exception {
 
         MvcResult mvcResult = mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -41,12 +47,14 @@ class OrderControllerTest {
 
         OrderDto order = JsonUtils.asPojo(mvcResult.getResponse().getContentAsByteArray(), OrderDto.class);
 
-        orderCode = order.getOrderCode();
+        return order.getOrderCode();
     }
 
     @Order(1)
     @Test
     void testGetAllOrders() throws Exception {
+
+        createNewOrder();
 
         mockMvc.perform(get("/api/orders"))
                 .andExpect(status().isOk())
@@ -59,6 +67,14 @@ class OrderControllerTest {
     @Test
     void testTakeOrder() throws Exception {
 
+        String orderCode = createNewOrder();
+
+        mockMvc.perform(put("/api/orders/" + orderCode + "/take"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+    }
+
+    private void takeOrder(String orderCode) throws Exception {
         mockMvc.perform(put("/api/orders/" + orderCode + "/take"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
@@ -68,7 +84,8 @@ class OrderControllerTest {
     @Test
     void testCompleteOrder() throws Exception {
 
-        testTakeOrder();
+        String orderCode = createNewOrder();
+        takeOrder(orderCode);
 
         mockMvc.perform(put("/api/orders/" + orderCode + "/complete"))
                 .andExpect(status().isOk())
@@ -79,7 +96,8 @@ class OrderControllerTest {
     @Test
     void testCancelOrder() throws Exception {
 
-        testTakeOrder();
+        String orderCode = createNewOrder();
+        takeOrder(orderCode);
 
         mockMvc.perform(put("/api/orders/" + orderCode + "/cancel"))
                 .andExpect(status().isOk())

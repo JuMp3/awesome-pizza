@@ -54,11 +54,19 @@ public class OrderService {
         throw getNotFoundException(orderCode);
     }
 
+    public boolean checkThereIsOthersOrderInProgress() {
+        List<PizzaOrder> orders = orderRepository.findByStatus(OrderStatus.IN_PROGRESS);
+        return !orders.isEmpty();
+    }
+
     public OrderDto takeOrder(String orderCode) {
         Optional<PizzaOrder> order = orderRepository.findByOrderCode(orderCode);
         if (order.isPresent()) {
             if (!OrderStatus.NEW.equals(order.get().getStatus())) {
                 throw new GenericConflictException("PizzaOrder " + orderCode + " already taken");
+            }
+            if (checkThereIsOthersOrderInProgress()) {
+                throw new GenericConflictException("There is another order in progress");
             }
             PizzaOrder takenOrder = order.get();
             takenOrder.setStatus(OrderStatus.IN_PROGRESS);
@@ -95,5 +103,9 @@ public class OrderService {
 
     private GenericNotFoundException getNotFoundException(String orderCode) {
         return new GenericNotFoundException("PizzaOrder " + orderCode + " not found");
+    }
+
+    public void deleteAllOrders() {
+        orderRepository.deleteAll();
     }
 }
